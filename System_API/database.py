@@ -1,4 +1,4 @@
-import psycopg2
+import psycopg
 from psycopg.rows import dict_rowimport os
 from dotenv import load_dotenv
 
@@ -35,4 +35,5 @@ def init_db():
 
 if __name__ == '__main__':
     init_db()
+
 
