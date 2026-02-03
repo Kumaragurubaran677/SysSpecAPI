@@ -110,7 +110,43 @@ def get_data():
             "success": False,
             "error": str(e)
         }), 500
-
+        
+@app.route('/devices/<mac_address>', methods=['PUT'])
+def update_device(mac_address):
+    """Update a device's JSON data and username"""
+    try:
+        data = request.get_json()
+       
+        if not data or 'json_data' not in data:
+            return jsonify({"error": "json_data is required"}), 400
+       
+        json_data = data['json_data']
+        username = data.get('username', None)
+       
+        conn = get_db_connection()
+        cur = conn.cursor()
+       
+        cur.execute(
+            'UPDATE device_data SET json_data = %s, username = %s, updated_at = CURRENT_TIMESTAMP WHERE mac_address = %s RETURNING id, mac_address, username, json_data, updated_at',
+            (json.dumps(json_data), username, mac_address)
+        )
+       
+        updated_device = cur.fetchone()
+        conn.commit()
+        cur.close()
+        conn.close()
+       
+        if updated_device:
+            return jsonify({
+                "message": "Device updated successfully",
+                "device": dict(updated_device)
+            }), 200
+        else:
+            return jsonify({"error": "Device not found"}), 404
+           
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+        
 @app.route('/health', methods=['GET'])
 def health_check():
     """Health check endpoint"""
@@ -142,5 +178,6 @@ if __name__ == '__main__':
         print(f"Error initializing database: {e}")
     
     app.run(debug=True, host='0.0.0.0', port=5000)
+
 
 
