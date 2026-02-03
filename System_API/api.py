@@ -5,12 +5,13 @@ Simple API to receive data from frontend and save to database
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import psycopg2
+import psycopg
 from psycopg.rows import dict_row
 import os
 import json
 from dotenv import load_dotenv
 from datetime import datetime
+
 
 load_dotenv()
 
@@ -141,4 +142,5 @@ if __name__ == '__main__':
         print(f"Error initializing database: {e}")
     
     app.run(debug=True, host='0.0.0.0', port=5000)
+
 
