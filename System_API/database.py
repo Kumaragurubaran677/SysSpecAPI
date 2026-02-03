@@ -1,6 +1,5 @@
 import psycopg2
-from psycopg2.extras import RealDictCursor
-import os
+from psycopg.rows import dict_rowimport os
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -9,7 +8,7 @@ DATABASE_URL = os.getenv('DATABASE_URL')
 
 def get_db_connection():
     """Create a database connection"""
-    conn = psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
+    conn = psycopg.connect(DATABASE_URL, row_factory=dict_row)
     return conn
 
 def init_db():
@@ -36,3 +35,4 @@ def init_db():
 
 if __name__ == '__main__':
     init_db()
+
