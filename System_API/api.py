@@ -6,7 +6,7 @@ Simple API to receive data from frontend and save to database
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import psycopg2
-from psycopg2.extras import RealDictCursor
+from psycopg.rows import dict_row
 import os
 import json
 from dotenv import load_dotenv
@@ -21,7 +21,7 @@ DATABASE_URL = os.getenv('DATABASE_URL')
 
 def get_db_connection():
     """Create a database connection"""
-    conn = psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
+    conn = psycopg.connect(DATABASE_URL, row_factory=dict_row)
     return conn
 
 @app.route('/api/data', methods=['POST'])
@@ -141,3 +141,4 @@ if __name__ == '__main__':
         print(f"Error initializing database: {e}")
     
     app.run(debug=True, host='0.0.0.0', port=5000)
+
