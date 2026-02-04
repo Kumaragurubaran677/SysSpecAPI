@@ -3,7 +3,7 @@
 Simple API to receive data from frontend and save to database
 """
 
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 import psycopg
 from psycopg.rows import dict_row
@@ -19,6 +19,26 @@ app = Flask(__name__)
 CORS(app)
 
 DATABASE_URL = os.getenv('DATABASE_URL')
+
+@app.route('/')
+def index():
+    """Serve the admin dashboard"""
+    try:
+        # Assuming admin_dashboard.html is in the parent directory of this file (System_API/api.py)
+        # However, in deployments, the CWD might be the repo root.
+        # We will try current dir and parent dir
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        parent_dir = os.path.dirname(current_dir)
+        
+        file_path = os.path.join(parent_dir, 'admin_dashboard.html')
+        
+        if not os.path.exists(file_path):
+             # Try repo root if running from inside System_API
+             file_path = 'admin_dashboard.html'
+             
+        return send_file(file_path)
+    except Exception as e:
+        return str(e), 404
 
 def get_db_connection():
     """Create a database connection"""
