@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Monitor</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent-color: #38bdf8;
+            --accent-hover: #0ea5e9;
+            --border-color: rgba(148, 163, 184, 0.1);
+            --success-color: #22c55e;
+            --error-color: #ef4444;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            min-height: 100vh;
+            background-image:
+                radial-gradient(circle at 10% 20%, rgba(56, 189, 248, 0.1) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(168, 85, 247, 0.1) 0%, transparent 20%);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Header */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(to right, #38bdf8, #818cf8);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .refresh-btn {
+            background: rgba(56, 189, 248, 0.1);
+            color: var(--accent-color);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .refresh-btn:hover {
+            background: rgba(56, 189, 248, 0.2);
+            transform: translateY(-1px);
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-color);
+            padding: 1.25rem;
+            border-radius: 12px;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        /* Table */
+        .table-container {
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th {
+            background: rgba(15, 23, 42, 0.5);
+            padding: 1rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        td {
+            padding: 1rem;
+            border-top: 1px solid var(--border-color);
+            font-size: 0.95rem;
+        }
+
+        tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+            cursor: pointer;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            background: rgba(34, 197, 94, 0.1);
+            color: var(--success-color);
+            border: 1px solid rgba(34, 197, 94, 0.2);
+        }
+
+        .action-btn {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .action-btn:hover {
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+        }
+
+        .icon-btn {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 0.25rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-right: 0.5rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+        }
+
+        .icon-btn:hover {
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+        }
+
+        .delete-btn:hover {
+            border-color: var(--error-color);
+            color: var(--error-color);
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal {
+            background: #1e293b;
+            width: 95%;
+            max-width: 1200px;
+            max-height: 90vh;
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            transform: translateY(20px);
+            transition: transform 0.3s ease;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        .modal-overlay.active .modal {
+            transform: translateY(0);
+        }
+
+        .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(15, 23, 42, 0.3);
+            border-radius: 16px 16px 0 0;
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .close-modal {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .close-modal:hover {
+            color: var(--text-primary);
+        }
+
+        .modal-body {
+            padding: 2rem;
+            overflow-y: auto;
+        }
+
+        /* Detailed View Grid */
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .detail-card {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            height: 100%;
+        }
+
+        .detail-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .detail-icon {
+            color: var(--accent-color);
+            width: 24px;
+            height: 24px;
+        }
+
+        .detail-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.75rem;
+            font-size: 0.9rem;
+        }
+
+        .info-label {
+            color: var(--text-secondary);
+        }
+
+        .info-value {
+            font-weight: 500;
+            color: var(--text-primary);
+            text-align: right;
+            max-width: 60%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .progress-bar {
+            background: rgba(255, 255, 255, 0.1);
+            height: 6px;
+            border-radius: 3px;
+            margin-top: 0.5rem;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--accent-color);
+            border-radius: 3px;
+        }
+
+        .json-viewer {
+            background: #0f172a;
+            padding: 1rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.875rem;
+            color: #e2e8f0;
+            border: 1px solid var(--border-color);
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .json-toggle {
+            margin-top: 1rem;
+            color: var(--accent-color);
+            cursor: pointer;
+            font-size: 0.9rem;
+            background: none;
+            border: none;
+            text-decoration: underline;
+        }
+
+        pre {
+            margin: 0;
+        }
+
+        .key {
+            color: #9cdcfe;
+        }
+
+        .string {
+            color: #ce9178;
+        }
+
+        .number {
+            color: #b5cea8;
+        }
+
+        .boolean {
+            color: #569cd6;
+        }
+
+        .null {
+            color: #569cd6;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            th,
+            td {
+                padding: 0.75rem;
+            }
+
+            .hide-mobile {
+                display: none;
+            }
+
+            .details-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>System Monitor</h1>
+            <button class="refresh-btn" onclick="fetchData()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M23 4v6h-6"></path>
+                    <path d="M1 20v-6h6"></path>
+                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                </svg>
+                Refresh
+            </button>
+        </header>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Total Devices</div>
+                <div class="stat-value" id="totalDevices">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Active (24h)</div>
+                <div class="stat-value" id="activeDevices">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Last Updated</div>
+                <div class="stat-value" id="lastUpdateTime">-</div>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Machine Info</th>
+                        <th class="hide-mobile">MAC Address</th>
+                        <th class="hide-mobile">OS</th>
+                        <th>Last Updated</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="deviceTableBody">
+                    <tr>
+                        <td colspan="5" class="loading">Loading data...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Edit Name Modal -->
+    <div class="modal-overlay" id="editModalOverlay">
+        <div class="modal" style="max-width: 400px; height: auto;">
+            <div class="modal-header">
+                <h2 class="modal-title">Edit Device Name</h2>
+                <button class="close-modal" onclick="closeEditModal()">&times;</button>
+            </div>
+            <div class="modal-body" style="padding: 1.5rem;">
+                <input type="hidden" id="editMacAddress">
+                <div style="margin-bottom: 1.5rem;">
+                    <label
+                        style="display: block; color: var(--text-secondary); margin-bottom: 0.5rem; font-size: 0.9rem;">Display
+                        Name</label>
+                    <input type="text" id="editNameInput"
+                        style="width: 100%; padding: 0.75rem; background: rgba(15, 23, 42, 0.5); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 6px; outline: none; transition: border-color 0.2s;">
+                </div>
+                <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                    <button onclick="closeEditModal()"
+                        style="padding: 0.5rem 1rem; background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary); border-radius: 6px; cursor: pointer;">Cancel</button>
+                    <button onclick="saveName()"
+                        style="padding: 0.5rem 1rem; background: var(--accent-color); border: none; color: #fff; border-radius: 6px; cursor: pointer; font-weight: 500;">Save
+                        Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal">
+            <div class="modal-header">
+                <div>
+                    <h2 class="modal-title" id="modalTitle">Device Details</h2>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.25rem;"
+                        id="modalSubtitle"></p>
+                </div>
+                <button class="close-modal" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="details-grid" id="detailsGrid">
+                    <!-- Cards will be injected here -->
+                </div>
+
+                <button class="json-toggle" onclick="toggleJson()">Show/Hide Raw JSON</button>
+                <div class="json-viewer" id="jsonViewer">
+                    <pre id="jsonContent"></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'https://sysspecapi.onrender.com/api/data';
+
+        function openEditModal(mac, currentName) {
+            document.getElementById('editMacAddress').value = mac;
+            document.getElementById('editNameInput').value = currentName === 'No User' ? '' : currentName;
+
+            // Focus input
+            const modal = document.getElementById('editModalOverlay');
+            modal.classList.add('active');
+            setTimeout(() => document.getElementById('editNameInput').focus(), 100);
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModalOverlay').classList.remove('active');
+        }
+
+        async function saveName() {
+            const mac = document.getElementById('editMacAddress').value;
+            const newName = document.getElementById('editNameInput').value;
+
+            if (!newName.trim()) {
+                alert('Please enter a name');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/${mac}/rename`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ name: newName })
+                });
+
+                if (response.ok) {
+                    closeEditModal();
+                    fetchData(); // Refresh list
+                } else {
+                    const result = await response.json();
+                    alert('Failed to update: ' + (result.error || 'Unknown error'));
+                }
+            } catch (err) {
+                alert('Error updating name: ' + err.message);
+            }
+        }
+
+        function syntaxHighlight(json) {
+            if (typeof json != 'string') json = JSON.stringify(json, undefined, 2);
+            json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+                var cls = 'number';
+                if (/^"/.test(match)) cls = /:$/.test(match) ? 'key' : 'string';
+                else if (/true|false/.test(match)) cls = 'boolean';
+                else if (/null/.test(match)) cls = 'null';
+                return '<span class="' + cls + '">' + match + '</span>';
+            });
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return 'Unknown';
+            const date = new Date(dateString);
+            const now = new Date();
+            const diff = now - date;
+            if (diff < 86400000) {
+                if (diff < 60000) return 'Just now';
+                if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
+                return `${Math.floor(diff / 3600000)}h ago`;
+            }
+            return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
+        async function fetchData() {
+            const tbody = document.getElementById('deviceTableBody');
+
+            try {
+                const response = await fetch(API_URL);
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.error || 'Failed to fetch data');
+
+                const devices = result.data || [];
+                document.getElementById('totalDevices').textContent = devices.length;
+                document.getElementById('lastUpdateTime').textContent = new Date().toLocaleTimeString();
+
+                const now = new Date();
+                const activeCount = devices.filter(d => (now - new Date(d.updated_at)) < 86400000).length;
+                document.getElementById('activeDevices').textContent = activeCount;
+
+                tbody.innerHTML = '';
+                if (devices.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="loading">No devices found</td></tr>';
+                    return;
+                }
+
+                devices.forEach(device => {
+                    const row = document.createElement('tr');
+                    const data = device.json_data || {};
+                    // Correct keys based on actual JSON structure
+                    const os = data.os || {};
+                    const hostname = os.hostname || 'Unknown Host';
+                    const osName = os.system ? `${os.system} ${os.release || ''}` : 'Unknown OS';
+                    const lastSeen = device.updated_at;
+                    const displayUser = data.user?.provided_username || device.username || 'No User';
+
+                    row.innerHTML = `
+                        <td>
+                            <div style="font-weight: 600">${displayUser}</div>
+                            <div style="font-size: 0.8rem; color: var(--text-secondary)">${hostname}</div>
+                        </td>
+                        <td class="hide-mobile" style="font-family: monospace">${device.mac_address}</td>
+                        <td class="hide-mobile">${osName}</td>
+                        <td>${formatDate(lastSeen)}</td>
+                        <td>
+                            <button class="icon-btn" title="Edit Name" onclick='openEditModal("${device.mac_address}", "${displayUser}")'>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                </svg>
+                            </button>
+                             <button class="icon-btn" title="Download JSON" onclick='downloadJson(${JSON.stringify(device).replace(/'/g, "&#39;")})'>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="7 10 12 15 17 10"></polyline>
+                                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                                </svg>
+                            </button>
+                            <button class="icon-btn delete-btn" title="Delete Device" onclick='deleteDevice("${device.mac_address}")'>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                </svg>
+                            </button>
+                            <button class="action-btn" onclick='showDetails(${JSON.stringify(device).replace(/'/g, "&#39;")})'>
+                                View Details
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+
+            } catch (error) {
+                console.error('Error:', error);
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--error-color);">Error loading data: ${error.message}</td></tr>`;
+            }
+        }
+
+        function downloadJson(device) {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(device, null, 2));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", `device_${device.mac_address}.json`);
+            document.body.appendChild(downloadAnchorNode); // required for firefox
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        }
+
+        async function deleteDevice(mac) {
+            if (!confirm(`Are you sure you want to delete device ${mac}?`)) return;
+
+            try {
+                const response = await fetch(`${API_URL}/${mac}`, {
+                    method: 'DELETE'
+                });
+                const result = await response.json();
+
+                if (response.ok) {
+                    fetchData();
+                } else {
+                    alert('Failed to delete: ' + (result.error || 'Unknown error'));
+                }
+            } catch (err) {
+                alert('Error deleting device: ' + err.message);
+            }
+        }
+
+        function showDetails(device) {
+            const modal = document.getElementById('modalOverlay');
+            const title = document.getElementById('modalTitle');
+            const subtitle = document.getElementById('modalSubtitle');
+            const rawContent = document.getElementById('jsonContent');
+            const grid = document.getElementById('detailsGrid');
+
+            const data = device.json_data || {};
+            const os = data.os || {};
+
+            // Set Header Info
+            const displayName = data.user?.provided_username || data.user?.username || device.username || 'Device Details';
+            title.textContent = displayName;
+            subtitle.textContent = `MAC: ${device.mac_address} | Host: ${os.hostname || 'Unknown'} | Last Update: ${new Date(device.updated_at).toLocaleString()}`;
+
+            // Clear existing grid
+            grid.innerHTML = '';
+
+            // Helper to add a card
+            const addCard = (html) => {
+                grid.innerHTML += html;
+            };
+
+            // 1. Operating System
+            if (data.os) {
+                addCard(`
+                <div class="detail-card">
+                    <div class="detail-header">
+                        <svg class="detail-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect><line x1="9" y1="9" x2="9" y2="9"></line><line x1="15" y1="9" x2="15" y2="9"></line></svg>
+                        <span class="detail-title">Operating System</span>
+                    </div>
+                    <div class="info-row"><span class="info-label">System</span><span class="info-value">${data.os.system || '-'} ${data.os.release || ''}</span></div>
+                    <div class="info-row"><span class="info-label">Version</span><span class="info-value">${data.os.version || '-'}</span></div>
+                    <div class="info-row"><span class="info-label">Architecture</span><span class="info-value">${data.os.architecture || '-'}</span></div>
+                    <div class="info-row"><span class="info-label">Machine</span><span class="info-value">${data.os.machine || '-'}</span></div>
+                </div>`);
+            }
+
+            // 2. Processor (CPU)
+            if (data.cpu) {
+                const cpu = data.cpu;
+                addCard(`
+                <div class="detail-card">
+                    <div class="detail-header">
+                        <svg class="detail-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect><rect x="9" y="9" width="6" height="6"></rect><path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"></path></svg>
+                        <span class="detail-title">Processor</span>
+                    </div>
+                    <div class="info-row"><span class="info-label">Model</span><span class="info-value" title="${cpu.model || ''}">${(cpu.model || 'Unknown').split(' ').slice(0, 3).join(' ')}...</span></div>
+                    <div class="info-row"><span class="info-label">Cores</span><span class="info-value">${cpu.physical_cores || '?'} Phys / ${cpu.total_cores || '?'} Log</span></div>
+                    <div class="info-row"><span class="info-label">Freq</span><span class="info-value">${cpu.current_frequency ? cpu.current_frequency.toFixed(0) + ' Mhz' : '-'}</span></div>
+                    <div class="info-row"><span class="info-label">Total Usage</span><span class="info-value">${cpu.total_cpu_usage || 0}%</span></div>
+                    <div class="progress-bar"><div class="progress-fill" style="width: ${cpu.total_cpu_usage || 0}%"></div></div>
+                </div>`);
+            }
+
+            // 3. Memory
+            if (data.memory) {
+                const mem = data.memory;
+                addCard(`
+                <div class="detail-card">
+                    <div class="detail-header">
+                        <svg class="detail-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 19v-3M10 19v-3M14 19v-3M18 19v-3M8 11V9M16 11V9M12 11V9M2 15h20M2 7a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2z"></path></svg>
+                        <span class="detail-title">Memory</span>
+                    </div>
+                    <div class="info-row"><span class="info-label">Total</span><span class="info-value">${mem.total_gb || '-'} GB</span></div>
+                    <div class="info-row"><span class="info-label">Available</span><span class="info-value">${mem.available_gb || '-'} GB</span></div>
+                    <div class="info-row"><span class="info-label">Used</span><span class="info-value">${mem.used_gb || '-'} GB (${mem.percentage || 0}%)</span></div>
+                    <div class="progress-bar"><div class="progress-fill" style="width: ${mem.percentage || 0}%"></div></div>
+                </div>`);
+            }
+
+            // 4. Disks
+            if (data.disks && data.disks.length > 0) {
+                let disksHtml = '';
+                data.disks.forEach(disk => {
+                    disksHtml += `
+                    <div style="margin-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.5rem;">
+                        <div class="info-row"><span class="info-label">${disk.device} (${disk.mountpoint})</span><span class="info-value">${disk.used_gb} / ${disk.total_gb} GB</span></div>
+                         <div class="progress-bar"><div class="progress-fill" style="width: ${disk.percentage || 0}%"></div></div>
+                    </div>`;
+                });
+                addCard(`
+                <div class="detail-card" style="grid-column: 1 / -1;">
+                    <div class="detail-header">
+                        <svg class="detail-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path><path d="M2 12h20"></path></svg>
+                        <span class="detail-title">Storage (${data.disks.length})</span>
+                    </div>
+                    <div>
+                        ${disksHtml}
+                    </div>
+                </div>`);
+            }
+
+            // 5. Network (Merged logic)
+            if (data.network && data.network.interfaces) {
+                addCard(`
+                <div class="detail-card">
+                    <div class="detail-header">
+                        <svg class="detail-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                        <span class="detail-title">Network</span>
+                    </div>
+                    ${renderNetworkInterfaces(data.network.interfaces)}
+                </div>`);
+            }
+
+            // 6. Battery
+            if (data.battery) {
+                addCard(`
+                <div class="detail-card">
+                    <div class="detail-header">
+                        <svg class="detail-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="6" width="18" height="12" rx="2" ry="2"></rect><line x1="23" y1="13" x2="23" y2="11"></line></svg>
+                        <span class="detail-title">Battery</span>
+                    </div>
+                    <div class="info-row"><span class="info-label">Percentage</span><span class="info-value">${data.battery.percentage}%</span></div>
+                    <div class="info-row"><span class="info-label">State</span><span class="info-value" style="color: ${data.battery.plugged_in ? 'var(--success-color)' : 'orange'}">${data.battery.plugged_in ? 'Plugged In' : 'On Battery'}</span></div>
+                    <div class="info-row"><span class="info-label">Time Left</span><span class="info-value">${data.battery.time_left_minutes !== null ? data.battery.time_left_minutes + 'm' : '-'}</span></div>
+                    <div class="progress-bar"><div class="progress-fill" style="width: ${data.battery.percentage || 0}%; background-color: ${data.battery.percentage > 20 ? 'var(--accent-color)' : 'var(--error-color)'};"></div></div>
+                </div>`);
+            }
+
+            // 7. GPU
+            if (data.gpu && data.gpu.length > 0) {
+                let gpus = Array.isArray(data.gpu) ? data.gpu.join('<br>') : data.gpu;
+                addCard(`
+                <div class="detail-card">
+                    <div class="detail-header">
+                        <svg class="detail-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><circle cx="15" cy="15" r="2"></circle><circle cx="15" cy="9" r="2"></circle><circle cx="9" cy="15" r="2"></circle></svg>
+                        <span class="detail-title">Graphics</span>
+                    </div>
+                    <div class="info-value" style="text-align: left; width: 100%; white-space: normal;">${gpus}</div>
+                </div>`);
+            }
+
+            // 8. BIOS / Motherboard
+            if (data.bios || data.motherboard) {
+                let content = '';
+                if (data.motherboard) {
+                    content += `
+                    <div style="font-size: 0.8rem; color: var(--accent-color); margin-bottom: 0.5rem; text-transform: uppercase;">Motherboard</div>
+                    <div class="info-row"><span class="info-label">Vendor</span><span class="info-value">${data.motherboard.manufacturer || '-'}</span></div>
+                    <div class="info-row"><span class="info-label">Product</span><span class="info-value">${data.motherboard.product || '-'}</span></div>
+                    <div style="margin-bottom: 1rem;"></div>`;
+                }
+                if (data.bios) {
+                    content += `
+                    <div style="font-size: 0.8rem; color: var(--accent-color); margin-bottom: 0.5rem; text-transform: uppercase;">BIOS</div>
+                    <div class="info-row"><span class="info-label">Vendor</span><span class="info-value">${data.bios.vendor || '-'}</span></div>
+                    <div class="info-row"><span class="info-label">Version</span><span class="info-value">${data.bios.version || '-'}</span></div>
+                    <div class="info-row"><span class="info-label">Date</span><span class="info-value">${data.bios.release_date || '-'}</span></div>`;
+                }
+                addCard(`
+                <div class="detail-card">
+                    <div class="detail-header">
+                        <svg class="detail-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>
+                        <span class="detail-title">Hardware</span>
+                    </div>
+                    ${content}
+                </div>`);
+            }
+
+            // 9. Python Environment
+            if (data.python) {
+                addCard(`
+                <div class="detail-card">
+                    <div class="detail-header">
+                        <svg class="detail-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>
+                        <span class="detail-title">Python Env</span>
+                    </div>
+                    <div class="info-row"><span class="info-label">Version</span><span class="info-value">${data.python.version_info || '-'}</span></div>
+                    <div class="info-row"><span class="info-label">Platform</span><span class="info-value">${data.python.platform || '-'}</span></div>
+                    <div class="info-row"><span class="info-label">Packages</span><span class="info-value">${data.python.installed_packages || 0}</span></div>
+                    <div class="info-row"><span class="info-label">Path</span><span class="info-value" title="${data.python.executable}" style="font-size:0.8rem;">...${(data.python.executable || '').slice(-20)}</span></div>
+                </div>`);
+            }
+
+            // 10. Boot Info
+            if (data.boot) {
+                addCard(`
+                <div class="detail-card">
+                    <div class="detail-header">
+                        <svg class="detail-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                        <span class="detail-title">Boot Info</span>
+                    </div>
+                    <div class="info-row"><span class="info-label">Boot Time</span><span class="info-value">${data.boot.boot_time || '-'}</span></div>
+                    <div class="info-row"><span class="info-label">Uptime</span><span class="info-value">${data.boot.uptime_hours ? data.boot.uptime_hours.toFixed(1) + ' hrs' : '-'}</span></div>
+                </div>`);
+            }
+
+            // 11. User Info
+            if (data.user) {
+                addCard(`
+                <div class="detail-card">
+                    <div class="detail-header">
+                        <svg class="detail-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                        <span class="detail-title">User</span>
+                    </div>
+                    ${data.user.provided_username ? `<div class="info-row"><span class="info-label">Full Name</span><span class="info-value">${data.user.provided_username}</span></div>` : ''}
+                    <div class="info-row"><span class="info-label">Username</span><span class="info-value">${data.user.username || '-'}</span></div>
+                    <div class="info-row"><span class="info-label">Admin?</span><span class="info-value">${data.user.is_admin ? 'Yes' : 'No'}</span></div>
+                    <div class="info-row"><span class="info-label">Home</span><span class="info-value" style="font-size:0.8rem;">${data.user.home_directory || '-'}</span></div>
+                </div>`);
+            }
+
+            // 12. Location / Locale
+            if (data.locale || data.timezone) {
+                addCard(`
+                <div class="detail-card">
+                    <div class="detail-header">
+                        <svg class="detail-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                        <span class="detail-title">Regional</span>
+                    </div>
+                    ${data.locale ? `<div class="info-row"><span class="info-label">Language</span><span class="info-value">${data.locale.language || '-'}</span></div>` : ''}
+                    ${data.locale ? `<div class="info-row"><span class="info-label">Encoding</span><span class="info-value">${data.locale.encoding || '-'}</span></div>` : ''}
+                    ${data.timezone ? `<div class="info-row"><span class="info-label">Timezone</span><span class="info-value">${data.timezone.timezone || '-'}</span></div>` : ''}
+                </div>`);
+            }
+
+            // Raw JSON
+            rawContent.innerHTML = syntaxHighlight(data);
+
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+
+            // Reset JSON viewer visibility
+            document.getElementById('jsonViewer').style.display = 'none';
+        }
+
+        function renderNetworkInterfaces(interfaces) {
+            if (!interfaces || interfaces.length === 0) return '<div class="info-row">No interfaces found</div>';
+
+            // Sort: Up first, then Ethernet/WiFi
+            const sorted = interfaces.sort((a, b) => (b.is_up === a.is_up) ? 0 : b.is_up ? 1 : -1);
+
+            // Show only the relevant ones (Up or first 2)
+            const toShow = sorted.slice(0, 3);
+
+            return toShow.map(i => `
+                <div style="margin-bottom: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.5rem;">
+                    <div class="info-row"><span class="info-label">${i.name}</span><span style="color: ${i.is_up ? 'var(--success-color)' : 'var(--text-secondary)'}">${i.is_up ? 'Active' : 'Down'}</span></div>
+                    <div class="info-row"><span class="info-label" style="font-size: 0.8rem">MAC</span><span class="info-value" style="font-family: monospace; font-size: 0.8rem">${i.mac_address}</span></div>
+                    ${i.addresses && i.addresses.length > 0 ? `<div class="info-row"><span class="info-label" style="font-size: 0.8rem">IP</span><span class="info-value" style="font-size: 0.8rem">${i.addresses[0].address}</span></div>` : ''}
+                </div>
+            `).join('');
+        }
+
+        function toggleJson() {
+            const viewer = document.getElementById('jsonViewer');
+            viewer.style.display = viewer.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('modalOverlay');
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        document.getElementById('modalOverlay').addEventListener('click', (e) => {
+            if (e.target.id === 'modalOverlay') closeModal();
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeModal();
+        });
+
+        // Initial fetch
+        fetchData();
+
+        // Auto refresh every 30 seconds
+        setInterval(fetchData, 30000);
+    </script>
+</body>
+
+</html>

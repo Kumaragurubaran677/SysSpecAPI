@@ -110,7 +110,93 @@ def get_data():
             "success": False,
             "error": str(e)
         }), 500
+
+@app.route('/api/data/<mac_address>', methods=['DELETE'])
+def delete_device(mac_address):
+    """Delete a device by MAC address"""
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
         
+        cur.execute('DELETE FROM device_data WHERE mac_address = %s RETURNING id', (mac_address,))
+        deleted = cur.fetchone()
+        
+        conn.commit()
+        cur.close()
+        conn.close()
+        
+        if deleted:
+            return jsonify({
+                "success": True,
+                "message": "Device deleted successfully"
+            }), 200
+        else:
+            return jsonify({
+                "success": False,
+                "error": "Device not found"
+            }), 404
+            
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+        
+@app.route('/api/data/<mac_address>/rename', methods=['PATCH'])
+def rename_device(mac_address):
+    """Update the device name/username"""
+    try:
+        data = request.get_json()
+        new_name = data.get('name')
+        
+        if not new_name:
+            return jsonify({"error": "Name is required"}), 400
+            
+        conn = get_db_connection()
+        cur = conn.cursor()
+        
+        # We need to update the username column AND the provided_username inside json_data
+        # PostgreSQL's jsonb_set can update keys inside the JSON
+        cur.execute('''
+            UPDATE device_data 
+            SET 
+                username = %s,
+                json_data = jsonb_set(
+                    CASE 
+                        WHEN json_data->'user' IS NULL THEN jsonb_set(json_data, '{user}', '{}'::jsonb)
+                        ELSE json_data 
+                    END, 
+                    '{user, provided_username}', 
+                    to_jsonb(%s::text)
+                ),
+                updated_at = CURRENT_TIMESTAMP
+            WHERE mac_address = %s
+            RETURNING id, mac_address, username, json_data
+        ''', (new_name, new_name, mac_address))
+        
+        updated_device = cur.fetchone()
+        conn.commit()
+        cur.close()
+        conn.close()
+        
+        if updated_device:
+            return jsonify({
+                "success": True,
+                "message": "Device renamed successfully",
+                "data": dict(updated_device)
+            }), 200
+        else:
+            return jsonify({
+                "success": False,
+                "error": "Device not found"
+            }), 404
+
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
 @app.route('/devices/<mac_address>', methods=['PUT'])
 def update_device(mac_address):
     """Update a device's JSON data and username"""
