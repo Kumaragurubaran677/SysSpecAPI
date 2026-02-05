@@ -261,11 +261,13 @@ def health_check():
         "timestamp": datetime.now().isoformat()
     }), 200
 
-if __name__ == '__main__':
-    # Initialize database table on startup
+@app.route('/api/init-db', methods=['GET'])
+def init_db_route():
+    """Check for DB and initialize if needed"""
     try:
         conn = get_db_connection()
         cur = conn.cursor()
+        # Create table if it doesn't exist (same logic as database.py)
         cur.execute('''
             CREATE TABLE IF NOT EXISTS device_data (
                 id SERIAL PRIMARY KEY,
@@ -279,9 +281,20 @@ if __name__ == '__main__':
         conn.commit()
         cur.close()
         conn.close()
-        print("Database initialized successfully!")
+        return jsonify({"success": True, "message": "Database initialized (checked) successfully"}), 200
     except Exception as e:
-        print(f"Error initializing database: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+if __name__ == '__main__':
+    # Initialize database table on startup
+    with app.app_context():
+        # We can call the route function logic directly or let the route handle it on request.
+        # But for local dev, we run it:
+        try:
+           init_db_route()
+           print("Database initialized successfully!")
+        except:
+           pass
     
     app.run(debug=True, host='0.0.0.0', port=5000)
 
